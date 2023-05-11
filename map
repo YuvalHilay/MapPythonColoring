@@ -1,4 +1,4 @@
-import random
+
 
 # Define the graph as a dictionary
 graph = {'A': ['B', 'C', 'D', 'F'],
@@ -10,14 +10,7 @@ graph = {'A': ['B', 'C', 'D', 'F'],
 # Define the colors
 colors = ['red', 'green', 'blue', 'yellow']
 
-# Define the utility function
-def utility(assignment):
-    utility_val = 0
-    for node, color in assignment.items():
-        for neighbor in graph[node]:
-            if neighbor in assignment and assignment[neighbor] == color:
-                utility_val -= 1
-    return utility_val
+
 
 # Define a function to check if a color can be assigned to a node
 def is_color_valid(node, color, assignment):
@@ -114,10 +107,3 @@ n_colors = int(input("Enter the number of colors: "))
 # Call the backtracking function
 result = color_map(n_colors)
 
-print("\nResult:")
-if result is not None:
-    print("Map coloring with", n_colors, "colors:")
-    for node, color in result.items():
-        print(node, ": ", color)
-else:
-    print("Map could not be colored with", n_colors, "colors.")
