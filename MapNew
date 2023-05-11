@@ -1,0 +1,91 @@
+import random
+
+def expectimax(state, depth, player, memo, vertices, neighbors, num_colors):
+    if depth == 0:
+        return heuristic(state)
+    
+    state_key = tuple(sorted(state.items()))
+    if state_key in memo:
+        return memo[state_key]
+    
+    if player == "MAX":
+        best_score = float('-inf')
+        for vertex in vertices:
+            if state[vertex] == 0:
+                for color in range(1, num_colors+1):
+                    if is_valid(state, vertex, color, neighbors):
+                        new_state = state.copy()
+                        new_state[vertex] = color
+                        score = expectimax(new_state, depth-1, "EXP", memo, vertices, neighbors, num_colors)
+                        best_score = max(best_score, score)
+        memo[state_key] = best_score
+        return best_score
+    else:
+        score_sum = 0
+        count = 0
+        for vertex in vertices:
+            if state[vertex] == 0:
+                for color in range(1, num_colors+1):
+                    if is_valid(state, vertex, color, neighbors):
+                        new_state = state.copy()
+                        new_state[vertex] = color
+                        score = expectimax(new_state, depth-1, "MAX", memo, vertices, neighbors, num_colors)
+                        score_sum += score
+                        count += 1
+        if count == 0:
+            score = heuristic(state)
+        else:
+            score = score_sum/count
+        memo[state_key] = score
+        return score
+        
+def is_valid(state, vertex, color, neighbors):
+    for neighbor in neighbors[vertex]:
+        if neighbor in state and state[neighbor] == color:
+            return False
+    return True
+
+def heuristic(state):
+    return len(set(state.values()))
+
+num_colors = int(input("Enter the number of colors: "))
+vertices = ['A', 'B', 'C', 'D', 'F']
+neighbors = {'A': ['B', 'C', 'D', 'F'],
+             'B': ['A', 'C'], 
+             'C': ['B', 'D', 'F', 'A'], 
+             'D': ['A', 'C', 'F'], 
+             'F': ['A', 'C', 'D']}
+initial_state = {'A': 0, 'B': 0, 'C': 0, 'D': 0, 'F': 0}
+memo = {}
+
+while 0 in initial_state.values():
+    best_vertex = None
+    best_score = float('-inf')
+    for vertex in vertices:
+        if initial_state[vertex] == 0:
+            score = len(neighbors[vertex])
+            if score > best_score:
+                best_score = score
+                best_vertex = vertex
+    
+    if best_vertex is not None:
+        best_color = None
+        best_score = float('-inf')
+        for color in range(1, num_colors+1):
+            if is_valid(initial_state, best_vertex, color, neighbors):
+                new_state = initial_state.copy()
+                new_state[best_vertex] = color
+                score = expectimax(new_state, 3, "MAX", memo, vertices, neighbors, num_colors)
+                if score > best_score:
+                    best_score = score
+                    best_color = color
+        initial_state[best_vertex] = best_color
+    else:
+        print("No solution found")
+        break
+
+
+if 0 not in initial_state.values() and None not in initial_state.values():
+     print("Final state:", initial_state)
+else:
+    print("No solution found")
