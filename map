@@ -1,0 +1,94 @@
+# -*- coding: utf-8 -*-
+
+
+import copy
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# Set the number of colors and the map of nodes and their neighbors
+NUM_COLORS = 3
+NODES = ['WA', 'NT', 'SA', 'Q', 'NSW', 'V']
+NEIGHBORS = {
+    'WA': ['NT', 'SA'],
+    'NT': ['WA', 'SA', 'Q'],
+    'SA': ['WA', 'NT', 'Q', 'NSW', 'V'],
+    'Q': ['NT', 'SA', 'NSW'],
+    'NSW': ['Q', 'SA', 'V'],
+    'V': ['SA', 'NSW']
+}
+
+# Define a function to color a node with a given color
+def color_node(state, node, color):
+    new_state = copy.deepcopy(state)
+    new_state[node] = color
+    return new_state
+
+# Define a function to check if a state is a solution
+def is_solution(state):
+    for node, color in state.items():
+        for neighbor in NEIGHBORS[node]:
+            if state[neighbor] == color:
+                return False
+    return True
+
+# Define a function to evaluate the expected value of a state using the Expectimax algorithm
+def expectimax(state, depth, player, node=None):
+    if depth == 0 or is_solution(state):
+        return 1 if is_solution(state) else 0
+    if player == 'chance':
+        expected_value = 0
+        num_colors = 0
+        for color in range(NUM_COLORS):
+            new_state = copy.deepcopy(state)
+            new_state = color_node(new_state, node, color)
+            expected_value += expectimax(new_state, depth, 'min', node=node)
+            num_colors += 1
+        return expected_value / num_colors
+    elif player == 'max':
+        max_value = -float('inf')
+        for node, color in state.items():
+            if color is None:
+                for color in range(NUM_COLORS):
+                    new_state = copy.deepcopy(state)
+                    new_state = color_node(new_state, node, color)
+                    value = expectimax(new_state, depth - 1, 'chance', node=node)
+                    max_value = max(max_value, value)
+        return max_value
+    elif player == 'min':
+        min_value = float('inf')
+        for node, color in state.items():
+            if color is None:
+                for color in range(NUM_COLORS):
+                    new_state = copy.deepcopy(state)
+                    new_state = color_node(new_state, node, color)
+                    value = expectimax(new_state, depth - 1, 'max', node=node)
+                    min_value = min(min_value, value)
+        return min_value
+
+# Create the graph
+G = nx.Graph()
+G.add_edges_from([('WA', 'NT'), ('WA', 'SA'), ('NT', 'SA'), ('NT', 'Q'), ('SA', 'NSW'), ('SA', 'V'), ('NSW', 'Q'), ('NSW', 'V'), ('Q', 'NSW')])
+
+# Initialize the state of the nodes to None
+state = {node: None for node in NODES}
+
+# Evaluate the optimal coloring of the nodes using the Expectimax algorithm
+best_coloring = None
+best_value = -float('inf')
+for node, color in state.items():
+    new_state = copy.deepcopy(state)
+    new_state = color_node(new_state, node, 0)
+    value = expectimax(new_state, 3, 'chance')
+    if value > best_value:
+        best_value = value
+        best_coloring = new_state
+
+# Print the optimal coloring
+print("Optimal Coloring:")
+for node, color in best_coloring.items():
+    print(f"{node}: {color}")
+    color_map = {0: 'r', 1: 'g', 2: 'b'} # Map color numbers to colors for visualization
+    colors = [color_map[best_coloring[node]] for node in G.nodes()]
+    nx.draw(G, pos=nx.spring_layout(G), with_labels=True, node_color=colors)
+plt.show()
+ 
