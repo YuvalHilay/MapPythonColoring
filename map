@@ -1,94 +1,123 @@
-# -*- coding: utf-8 -*-
+import random
 
+# Define the graph as a dictionary
+graph = {'A': ['B', 'C', 'D', 'F'],
+         'B': ['A', 'C'],
+         'C': ['B', 'D', 'F', 'A'],
+         'D': ['A', 'C', 'F'],
+         'F': ['A', 'C', 'D']}
 
-import copy
-import networkx as nx
-import matplotlib.pyplot as plt
+# Define the colors
+colors = ['red', 'green', 'blue', 'yellow']
 
-# Set the number of colors and the map of nodes and their neighbors
-NUM_COLORS = 3
-NODES = ['WA', 'NT', 'SA', 'Q', 'NSW', 'V']
-NEIGHBORS = {
-    'WA': ['NT', 'SA'],
-    'NT': ['WA', 'SA', 'Q'],
-    'SA': ['WA', 'NT', 'Q', 'NSW', 'V'],
-    'Q': ['NT', 'SA', 'NSW'],
-    'NSW': ['Q', 'SA', 'V'],
-    'V': ['SA', 'NSW']
-}
+# Define the utility function
+def utility(assignment):
+    utility_val = 0
+    for node, color in assignment.items():
+        for neighbor in graph[node]:
+            if neighbor in assignment and assignment[neighbor] == color:
+                utility_val -= 1
+    return utility_val
 
-# Define a function to color a node with a given color
-def color_node(state, node, color):
-    new_state = copy.deepcopy(state)
-    new_state[node] = color
-    return new_state
-
-# Define a function to check if a state is a solution
-def is_solution(state):
-    for node, color in state.items():
-        for neighbor in NEIGHBORS[node]:
-            if state[neighbor] == color:
-                return False
+# Define a function to check if a color can be assigned to a node
+def is_color_valid(node, color, assignment):
+    for neighbor in graph[node]:
+        if neighbor in assignment and assignment[neighbor] == color:
+            return False
     return True
 
-# Define a function to evaluate the expected value of a state using the Expectimax algorithm
-def expectimax(state, depth, player, node=None):
-    if depth == 0 or is_solution(state):
-        return 1 if is_solution(state) else 0
-    if player == 'chance':
-        expected_value = 0
-        num_colors = 0
-        for color in range(NUM_COLORS):
-            new_state = copy.deepcopy(state)
-            new_state = color_node(new_state, node, color)
-            expected_value += expectimax(new_state, depth, 'min', node=node)
-            num_colors += 1
-        return expected_value / num_colors
-    elif player == 'max':
-        max_value = -float('inf')
-        for node, color in state.items():
-            if color is None:
-                for color in range(NUM_COLORS):
-                    new_state = copy.deepcopy(state)
-                    new_state = color_node(new_state, node, color)
-                    value = expectimax(new_state, depth - 1, 'chance', node=node)
-                    max_value = max(max_value, value)
-        return max_value
-    elif player == 'min':
-        min_value = float('inf')
-        for node, color in state.items():
-            if color is None:
-                for color in range(NUM_COLORS):
-                    new_state = copy.deepcopy(state)
-                    new_state = color_node(new_state, node, color)
-                    value = expectimax(new_state, depth - 1, 'max', node=node)
-                    min_value = min(min_value, value)
-        return min_value
+# Define the expectimax function
+def expectimax(node, assignment, colors, prob):
+    # Check if all nodes have been assigned a color
+    if len(assignment) == len(graph):
+        return assignment, prob
+    
+    # Select the next uncolored node
+    uncolored_nodes = [node for node in graph if node not in assignment]
+    node = uncolored_nodes[0]
+    
+    # If the node is a leaf node, return the expected utility and probability
+    if len(uncolored_nodes) == 1:
+        eu = 0
+        count = 0
+        for color in colors:
+            if is_color_valid(node, color, assignment):
+                new_assignment = assignment.copy()
+                new_assignment[node] = color
+                eu += prob * utility(new_assignment)
+                count += 1
+        return assignment, eu / count
+    
+    # If the node is not a leaf node, do expectimax search
+    if node in assignment:
+        # The node has already been assigned a color, do a max search
+        max_utility = float('-inf')
+        max_node = None
+        for neighbor in graph[node]:
+            if neighbor not in assignment:
+                for color in colors:
+                    if is_color_valid(neighbor, color, assignment):
+                        new_assignment = assignment.copy()
+                        new_assignment[neighbor] = color
+                        _, utility_val = expectimax(neighbor, new_assignment, colors, prob)
+                        if utility_val > max_utility:
+                            max_utility = utility_val
+                            max_node = neighbor
+        return max_node, max_utility
+    else:
+        # The node has not been assigned a color, do an expectation search
+        eu = 0
+        count = 0
+        if len(colors) == 0:
+            return assignment, 0
+        for color in colors:
+            if is_color_valid(node, color, assignment):
+                new_assignment = assignment.copy()
+                new_assignment[node] = color
+                _, utility_val = expectimax(node, new_assignment, colors, prob / len(colors))
+                eu += utility_val
+                count += 1
+        if count == 0:
+            return assignment, 0
+        else:
+            return assignment, eu / count
 
-# Create the graph
-G = nx.Graph()
-G.add_edges_from([('WA', 'NT'), ('WA', 'SA'), ('NT', 'SA'), ('NT', 'Q'), ('SA', 'NSW'), ('SA', 'V'), ('NSW', 'Q'), ('NSW', 'V'), ('Q', 'NSW')])
 
-# Initialize the state of the nodes to None
-state = {node: None for node in NODES}
+# Define the backtracking function
+def color_map(n_colors):
+    # Call the expectimax function with an empty assignment and equal probability for all colors
+    result, _ = expectimax(None, {}, colors[:n_colors], 1)
+    print("\nResult:")
+    if result is not None:
+        print("Map coloring with", n_colors, "colors:")
+        for node, color in result.items():
+            print(node, ": ", color)
+    else:
+        print("Map could not be colored with", n_colors, "colors.")
+    return result
 
-# Evaluate the optimal coloring of the nodes using the Expectimax algorithm
-best_coloring = None
-best_value = -float('inf')
-for node, color in state.items():
-    new_state = copy.deepcopy(state)
-    new_state = color_node(new_state, node, 0)
-    value = expectimax(new_state, 3, 'chance')
-    if value > best_value:
-        best_value = value
-        best_coloring = new_state
 
-# Print the optimal coloring
-print("Optimal Coloring:")
-for node, color in best_coloring.items():
-    print(f"{node}: {color}")
-    color_map = {0: 'r', 1: 'g', 2: 'b'} # Map color numbers to colors for visualization
-    colors = [color_map[best_coloring[node]] for node in G.nodes()]
-    nx.draw(G, pos=nx.spring_layout(G), with_labels=True, node_color=colors)
-plt.show()
- 
+
+# Define the utility function
+def utility(assignment):
+    utility_val = 0
+    for node, color in assignment.items():
+        for neighbor in graph[node]:
+            if neighbor in assignment and assignment[neighbor] == color:
+                utility_val -= 1
+    return utility_val
+
+
+# Get user input for number of colors
+n_colors = int(input("Enter the number of colors: "))
+
+# Call the backtracking function
+result = color_map(n_colors)
+
+print("\nResult:")
+if result is not None:
+    print("Map coloring with", n_colors, "colors:")
+    for node, color in result.items():
+        print(node, ": ", color)
+else:
+    print("Map could not be colored with", n_colors, "colors.")
