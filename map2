@@ -1,70 +1,79 @@
+import random
 
-import networkx as nx
-import matplotlib.pyplot as plt
+def expectimax(state, depth, player, memo):
+    if depth == 0:
+        return heuristic(state)
+    
+    state_key = tuple(sorted(state.items()))
+    if state_key in memo:
+        return memo[state_key]
+    
+    if player == "MAX":
+        best_score = float('-inf')
+        for vertex in vertices:
+            if state[vertex] == 0:
+                for color in range(1, num_colors+1):
+                    if is_valid(state, vertex, color):
+                        new_state = state.copy()
+                        new_state[vertex] = color
+                        score = expectimax(new_state, depth-1, "EXP", memo)
+                        best_score = max(best_score, score)
+        memo[state_key] = best_score
+        return best_score
+    else:
+        score_sum = 0
+        count = 0
+        for vertex in vertices:
+            if state[vertex] == 0:
+                for color in range(1, num_colors+1):
+                    if is_valid(state, vertex, color):
+                        new_state = state.copy()
+                        new_state[vertex] = color
+                        score = expectimax(new_state, depth-1, "MAX", memo)
+                        score_sum += score
+                        count += 1
+        if count == 0:
+            score = heuristic(state)
+        else:
+            score = score_sum/count
+        memo[state_key] = score
+        return score
+        
+def is_valid(state, vertex, color):
+    for neighbor in neighbors[vertex]:
+        if neighbor in state and state[neighbor] == color:
+            return False
+    return True
 
-# Adjacent Matrix
-G = [[ 0, 1, 1, 0, 1, 0],
-     [ 1, 0, 1, 1, 0, 1],
-     [ 1, 1, 0, 1, 1, 0],
-     [ 0, 1, 1, 0, 0, 1],
-     [ 1, 0, 1, 0, 0, 1],
-     [ 0, 1, 0, 1, 1, 0]]
+def heuristic(state):
+    return len(set(state.values()))
 
-# initiate the name of node.
-node = "abcdef"
-t_={}
-for i in range(len(G)):
-    t_[node[i]] = i
+num_colors = int(input("Enter the number of colors: "))
+vertices = ['A', 'B', 'C', 'D', 'F']
+neighbors = {'A': ['B', 'C', 'D', 'F'], 'B': ['A', 'C'], 'C': ['B', 'D', 'F', 'A'], 'D': ['A', 'C', 'F'], 'F': ['A', 'C', 'D']}
+initial_state = {'A': 0, 'B': 0, 'C': 0, 'D': 0, 'F': 0}
+memo = {}
 
-# count degree of all node.
-degree =[]
-for i in range(len(G)):
-    degree.append(sum(G[i]))
+while 0 in initial_state.values():
+    best_vertex = None
+    best_score = float('-inf')
+    for vertex in vertices:
+        if initial_state[vertex] == 0:
+            score = expectimax(initial_state, 3, "EXP", memo)
+            if score > best_score:
+                best_score = score
+                best_vertex = vertex
+    if best_vertex is not None:
+        best_color = None
+        best_score = float('-inf')
+        for color in range(1, num_colors+1):
+            if is_valid(initial_state, best_vertex, color):
+                new_state = initial_state.copy()
+                new_state[best_vertex] = color
+                score = expectimax(new_state, 3, "MAX", memo)
+                if score > best_score:
+                    best_score = score
+                    best_color = color
+        initial_state[best_vertex] = best_color
 
-# initiate the possible colors
-colorDict = {}
-for i in range(len(G)):
-    colorDict[node[i]]=["Blue","Red","Yellow","Green"]
-
-# sort the node depending on the degree
-sortedNode=[]
-indeks = []
-
-# use selection sort
-for i in range(len(degree)):
-    _max = 0
-    j = 0
-    for j in range(len(degree)):
-        if j not in indeks:
-            if degree[j] > _max:
-                _max = degree[j]
-                idx = j
-    indeks.append(idx)
-    sortedNode.append(node[idx])
-
-# The main process
-theSolution={}
-for n in sortedNode:
-    setTheColor = colorDict[n]
-    theSolution[n] = setTheColor[0]
-    adjacentNode = G[t_[n]]
-    for j in range(len(adjacentNode)):
-        if adjacentNode[j]==1 and (setTheColor[0] in colorDict[node[j]]):
-            colorDict[node[j]].remove(setTheColor[0])
-
-# Print the solution
-for t,w in sorted(theSolution.items()):
-    print("Node",t," = ",w)
-
-# Create the graph
-G = nx.from_numpy_matrix(G)
-pos = nx.spring_layout(G)
-
-# Get the node colors based on the solution
-node_colors = [theSolution[n] for n in node]
-
-# Draw the graph with node labels and colors
-nx.draw(G, pos, with_labels=True, node_color=node_colors, font_color='white')
-
-# Show the graph
-plt.show()
+print("Final state:", initial_state)
