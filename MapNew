@@ -25,7 +25,7 @@ def MappingColorsWithexpectimax(state, depth, player, memoization, vertices, nei
         return ideal_score
     # If it's the chance node's turn, calculate the expected score
     else:
-        score_sum = 0
+        score_amount = 0
         count = 0
         for vertex in vertices:
             if state[vertex] == 0:
@@ -34,12 +34,12 @@ def MappingColorsWithexpectimax(state, depth, player, memoization, vertices, nei
                         new_state = state.copy()
                         new_state[vertex] = color
                         score = MappingColorsWithexpectimax(new_state, depth-1, "MAX", memoization, vertices, neighbors, num_colors)
-                        score_sum += score
+                        score_amount += score
                         count += 1
         if count == 0:
             score = heuristicForStateOfColoringVertex(state)
         else:
-            score = score_sum/count
+            score = score_amount/count
          # Store the expected score in the memo dictionary and return it
         memoization[state_key] = score
         return score
