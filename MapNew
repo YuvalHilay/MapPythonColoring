@@ -99,6 +99,6 @@ while 0 in initial_state.values():
 
 #If all vertices are assigned a color and there are no None values in the initial state
 if 0 not in initial_state.values() and None not in initial_state.values():
-     print("Showing of the Final state ('Vertex', Color Number):", initial_state)
+     print("Showing of the Final state ('Vertex': Color Number):", initial_state)
 else:
     print("No solution found , it cannot be possible !!!")
