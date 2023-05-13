@@ -9,7 +9,7 @@ def MappingColorsWithexpectimax(state, depth, player, memo, vertices, neighbors,
     state_key = tuple(sorted(state.items()))
     if state_key in memo:
         return memo[state_key]
-# If it's the player's turn, look for the best move
+# look for the best move
     if player == "MAX":
         best_score = float('-inf')
         for vertex in vertices:
