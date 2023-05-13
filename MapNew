@@ -4,7 +4,7 @@
 def MappingColorsWithexpectimax(state, depth, player, memoization, vertices, neighbors, num_colors):
     # If depth limit reached, return heuristic value of state
     if depth == 0:
-        return heuristic(state)
+        return heuristicForStateOfColoringVertex(state)
 # Convert the state dictionary into a tuple and check if it is in the memoization dictionary    
     state_key = tuple(sorted(state.items()))
     if state_key in memoization:
@@ -37,7 +37,7 @@ def MappingColorsWithexpectimax(state, depth, player, memoization, vertices, nei
                         score_sum += score
                         count += 1
         if count == 0:
-            score = heuristic(state)
+            score = heuristicForStateOfColoringVertex(state)
         else:
             score = score_sum/count
          # Store the expected score in the memo dictionary and return it
@@ -53,7 +53,7 @@ def is_valid(state, vertex, color, neighbors):
     return True
 #The function heuristic calculates the number of unique colors used in the current state.
 #It returns the count as the heuristic value.
-def heuristic(state):
+def heuristicForStateOfColoringVertex(state):
     return len(set(state.values()))
 #Take input from the user for the number of colors
 num_colors = int(input("Enter the number of colors: "))
