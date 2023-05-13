@@ -1,5 +1,5 @@
 #The function MappingColorsWithexpectimax takes in the current state, depth, player, memoizationization dictionary, vertices,
-#neighbor dictionary and number of colors. It returns the best score for the player at that state
+#neighbor dictionary and number of colors. It returns the ideal score for the player at that state
 #considering the possible moves of both the player and chance nodes.#
 def MappingColorsWithexpectimax(state, depth, player, memoization, vertices, neighbors, num_colors):
     # If depth limit reached, return heuristic value of state
@@ -9,9 +9,9 @@ def MappingColorsWithexpectimax(state, depth, player, memoization, vertices, nei
     state_key = tuple(sorted(state.items()))
     if state_key in memoization:
         return memoization[state_key]
-# If it's the player's turn, look for the best move
+# If it's the player's turn, look for the ideal move
     if player == "MAX":
-        best_score = float('-inf')
+        ideal_score = float('-inf')
         for vertex in vertices:
             if state[vertex] == 0:
                 for color in range(1, num_colors+1):
@@ -19,10 +19,10 @@ def MappingColorsWithexpectimax(state, depth, player, memoization, vertices, nei
                         new_state = state.copy()
                         new_state[vertex] = color
                         score = MappingColorsWithexpectimax(new_state, depth-1, "EXP", memoization, vertices, neighbors, num_colors)
-                        best_score = max(best_score, score)
-        # Store the best score in the memoization dictionary and return it
-        memoization[state_key] = best_score
-        return best_score
+                        ideal_score = max(ideal_score, score)
+        # Store the ideal score in the memoization dictionary and return it
+        memoization[state_key] = ideal_score
+        return ideal_score
     # If it's the chance node's turn, calculate the expected score
     else:
         score_sum = 0
@@ -69,30 +69,30 @@ initial_state = {'A': 0, 'B': 0, 'C': 0, 'D': 0, 'F': 0}
 memoization = {}
 #This loop keeps running until all vertices are assigned a color
 while 0 in initial_state.values():
-    best_vertex = None
-    best_score = float('-inf')
+    ideal_vertex = None
+    ideal_score = float('-inf')
     # Loop through each vertex to find the one with the highest degree
     for vertex in vertices:
         if initial_state[vertex] == 0:
             score = len(neighbors[vertex])
-            if score > best_score:
-                best_score = score
-                best_vertex = vertex
+            if score > ideal_score:
+                ideal_score = score
+                ideal_vertex = vertex
     # If there is a vertex to assign a color to
-    if best_vertex is not None:
-        #Initialize the best color and its score
-        best_color = None
-        best_score = float('-inf')
+    if ideal_vertex is not None:
+        #Initialize the ideal color and its score
+        ideal_color = None
+        ideal_score = float('-inf')
         #Loop through each color to find the one with the highest score
         for color in range(1, num_colors+1):
-            if is_valid(initial_state, best_vertex, color, neighbors):
+            if is_valid(initial_state, ideal_vertex, color, neighbors):
                 new_state = initial_state.copy()
-                new_state[best_vertex] = color
+                new_state[ideal_vertex] = color
                 score = MappingColorsWithexpectimax(new_state, 3, "MAX", memoization, vertices, neighbors, num_colors)
-                if score > best_score:
-                    best_score = score
-                    best_color = color
-        initial_state[best_vertex] = best_color
+                if score > ideal_score:
+                    ideal_score = score
+                    ideal_color = color
+        initial_state[ideal_vertex] = ideal_color
     else:
         print("No solution found")
         break
