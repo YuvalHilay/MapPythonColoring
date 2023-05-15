@@ -1,0 +1,102 @@
+#minimaxof the best color
+def MappingColorsWithminimax(state, depth, player, memoization, vertices, neighbors, num_colors):
+    # If depth limit reached, return heuristic value of state
+    if depth == 0:
+        return heuristicForStateOfColoringVertex(state)
+
+    # Convert the state dictionary into a tuple and check if it is in the memoization dictionary    
+    state_key = tuple(sorted(state.items()))
+    if state_key in memoization:
+        return memoization[state_key]
+
+    # If it's the player's turn, look for the ideal move
+    if player == "MAX":
+        ideal_score = float('-inf')
+        for vertex in vertices:
+            if state[vertex] == 0:
+                for color in range(1, num_colors+1):
+                    if is_valid(state, vertex, color, neighbors):
+                        new_state = state.copy()
+                        new_state[vertex] = color
+                        score = MappingColorsWithminimax(new_state, depth-1, "MIN", memoization, vertices, neighbors, num_colors)
+                        ideal_score = max(ideal_score, score)
+        
+        # Store the ideal score in the memoization dictionary and return it
+        memoization[state_key] = ideal_score
+        return ideal_score
+
+    # If it's the opponent's turn, look for the worst move
+    else:
+        ideal_score = float('inf')
+        for vertex in vertices:
+            if state[vertex] == 0:
+                for color in range(1, num_colors+1):
+                    if is_valid(state, vertex, color, neighbors):
+                        new_state = state.copy()
+                        new_state[vertex] = color
+                        score = MappingColorsWithminimax(new_state, depth-1, "MAX", memoization, vertices, neighbors, num_colors)
+                        ideal_score = min(ideal_score, score)
+        
+        # Store the ideal score in the memoization dictionary and return it
+        memoization[state_key] = ideal_score
+        return ideal_score
+
+    
+#The function is_valid checks if a vertex can be colored with the given color without violating
+#the color constraint of its neighbors. It returns True if valid, False otherwise.
+def is_valid(state, vertex, color, neighbors):
+    for neighbor in neighbors[vertex]:
+        if neighbor in state and state[neighbor] == color:
+            return False
+    return True
+#The function heuristic calculates the number of unique colors used in the current state.
+#It returns the count as the heuristic value.
+def heuristicForStateOfColoringVertex(state):
+    return len(set(state.values()))
+#Take input from the user for the number of colors
+num_colors = int(input("Enter the number of colors: "))
+#Define the vertices and neighbors of the graph
+vertices = ['A', 'B', 'C', 'D', 'F']
+neighbors = {'A': ['B', 'C', 'D', 'F'],
+             'B': ['A', 'C'], 
+             'C': ['B', 'D', 'F', 'A'], 
+             'D': ['A', 'C', 'F'], 
+             'F': ['A', 'C', 'D']}
+#Define the initial state of the graph where all vertices are uncolored
+initial_state = {'A': 0, 'B': 0, 'C': 0, 'D': 0, 'F': 0}
+memoization = {}
+#This loop keeps running until all vertices are assigned a color
+while 0 in initial_state.values():
+    ideal_vertex = None
+    ideal_score = float('-inf')
+    # Loop through each vertex to find the one with the highest degree
+    for vertex in vertices:
+        if initial_state[vertex] == 0:
+            score = len(neighbors[vertex])
+            if score > ideal_score:
+                ideal_score = score
+                ideal_vertex = vertex
+    # If there is a vertex to assign a color to
+    if ideal_vertex is not None:
+        #Initialize the ideal color and its score
+        ideal_color = None
+        ideal_score = float('-inf')
+        #Loop through each color to find the one with the highest score
+        for color in range(1, num_colors+1):
+            if is_valid(initial_state, ideal_vertex, color, neighbors):
+                new_state = initial_state.copy()
+                new_state[ideal_vertex] = color
+                score = MappingColorsWithminimax(new_state, 3, "MAX", memoization, vertices, neighbors, num_colors)
+                if score > ideal_score:
+                    ideal_score = score
+                    ideal_color = color
+        initial_state[ideal_vertex] = ideal_color
+    else:
+        print("No solution found")
+        break
+
+#If all vertices are assigned a color and there are no None values in the initial state
+if 0 not in initial_state.values() and None not in initial_state.values():
+     print("Showing of the Final state ('Vertex': Color Number):", initial_state)
+else:
+    print("No solution found , it cannot be possible !!!")
